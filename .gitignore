@@ -1,0 +1,5 @@
+*.bak
+*.so
+*.o
+*.pdf
+zshim.c
