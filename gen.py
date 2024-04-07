@@ -12,7 +12,7 @@ def args(fn_arg_types):
     return map(lambda x: ' '.join(x), z)
 
 with open(argv[1]) as f:
-    for line in map(str.strip, f):
+    for line in map(str.rstrip, f):
         print(line)
 
         # "// int fn(int foo, float bar);" -> ('int', 'fn', 'int foo, float bar')
@@ -41,9 +41,9 @@ with open(argv[1]) as f:
             print(f'{fn_type} wrap_{fn_name}({fn_args}) {{')
 
             if len(fn_arg_types) and fn_arg_types[0] == 'z_streamp':
-                print(f'  fprintf(stderr, "{fn_name}(%p)\\n", (void*){fn_arg_names[0]});')
+                print(f'  debugp("{fn_name}(%p)\\n", (void*){fn_arg_names[0]});')
             else:
-                print(f'  fprintf(stderr, "{fn_name}\\n");')
+                print(f'  debugp("{fn_name}\\n");')
 
             if fn_name.startswith('deflate') and len(fn_arg_types) and fn_arg_names[0] == 'strm':
                 print(f'  z_shimp shim = unwrap_z_streamp(strm);')

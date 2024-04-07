@@ -3,8 +3,8 @@
 ## Description
 
 libzshim is an LD_PRELOAD hack that acts as an API adapter to make tools
-designed to compress with zlib use [zopfli](https://github.com/google/zopfli)
-instead.
+designed to compress with zlib use alternative implementations such as
+[zopfli](https://github.com/google/zopfli).
 
 I wrote it so I could repack deflate streams in PDFs to make them a bit
 smaller - I typically get a 4-6% reduction in size.
@@ -42,10 +42,20 @@ qpdf --recompress-flate \
      original.pdf output.pdf
 ```
 
+Not all zlib functionality is supported. Programs known to work:
+
+* qpdf (versions 11.3 and 11.9)
+
 ### Debugging
 
 Run `make debug` to build libzshim-debug.so version, it will print debug
 information to stderr.
+
+## To Do
+
+* wrapper to run programs with libzshim
+* make zopfli parameters configurable
+* implement [rsyncable](https://svana.org/kleptog/rgzip.html) mode
 
 ## Help
 
