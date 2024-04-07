@@ -113,13 +113,8 @@ DLFUNC(ZopfliCompress, void,
 (a, b, c, d, e, f))
 
 char *flush_str[] = {
-  "Z_NO_FLUSH",
-  "Z_PARTIAL_FLUSH",
-  "Z_SYNC_FLUSH",
-  "Z_FULL_FLUSH",
-  "Z_FINISH",
-  "Z_BLOCK",
-  "Z_TREES"
+  "Z_NO_FLUSH", "Z_PARTIAL_FLUSH", "Z_SYNC_FLUSH",
+  "Z_FULL_FLUSH", "Z_FINISH", "Z_BLOCK", "Z_TREES"
 };
 
 //+ int deflate(z_streamp strm, int flush);
@@ -135,6 +130,12 @@ int wrap_deflate(z_streamp strm, int flush) {
     fprintf(stderr, "deflate(%p, %s)\n", (void *)strm, flush_str[flush]);
   } else if (flush < 0 || flush > 6) {
     fprintf(stderr, "deflate(%p, %d)\n", (void *)strm, flush);
+  }
+
+  if (shim->state == -1) {
+    int ret = _real_deflate(strm, flush);
+    wrap_z_streamp(strm, shim);
+    return ret;
   }
 
   // are we being fed data?
@@ -157,20 +158,26 @@ int wrap_deflate(z_streamp strm, int flush) {
 
   if (flush == Z_FINISH) {
     if (shim->obuf_off == 0) {
-      if (shim->obuf != NULL) {
-        fprintf(stderr, "shim->obuf: %p\n", (void*)shim->obuf);
-      }
       fprintf(stderr, "> going to zopfli %zu bytes\n", strm->total_in);
+
       ZopfliOptions zopt[] = {0};
       _ZopfliInitOptions(zopt);
+
       // TODO: make this configurable - enviornment varibles?
       if (shim->ibuf_off < 8192) {
-        zopt->numiterations = 1000;
-      } else if (shim->ibuf_off < 65536) {
+        zopt->numiterations = 464;
+      } else if (shim->ibuf_off < 32768) {
+        zopt->numiterations = 215;
+      } else if (shim->ibuf_off < 131072) {
         zopt->numiterations = 100;
+      } else if (shim->ibuf_off < 524288) {
+        zopt->numiterations = 46;
+      } else if (shim->ibuf_off < 2097152) {
+        zopt->numiterations = 22;
       } else {
-        zopt->numiterations = 15;
+        zopt->numiterations = 10;
       }
+
       _ZopfliCompress(
         zopt, shim->format,
         shim->ibuf, shim->ibuf_off,
@@ -197,9 +204,6 @@ int wrap_deflate(z_streamp strm, int flush) {
       shim->obuf_off += strm->avail_out;
       strm->avail_out = 0;
       strm->total_out += strm->avail_out;
-
-      wrap_z_streamp(strm, shim);
-      return Z_OK;
     }
   }
 
@@ -259,7 +263,7 @@ int wrap_deflateReset(z_streamp stream) {
 // int compress(Bytef *dest, uLongf *destLen, const Bytef *source, uLong sourceLen);
 // int compress2(Bytef *dest, uLongf *destLen, const Bytef *source, uLong sourceLen, int level);
 
-// int deflateInit_(z_streamp stream, int level, const char *version, int stream_size);
+//_int deflateInit_(z_streamp stream, int level, const char *version, int stream_size);
 // int deflateSetDictionary(z_streamp strm, const Bytef *dictionary, uInt dictLength);
 // int deflateGetDictionary(z_streamp strm, Bytef *dictionary, uInt *dictLength);
 // int deflateCopy(z_streamp dest, z_streamp source);
