@@ -54,7 +54,7 @@ information to stderr.
 ## To Do
 
 * wrapper to run programs with libzshim
-* make zopfli parameters configurable
+* make more zopfli parameters configurable
 * implement [rsyncable](https://svana.org/kleptog/rgzip.html) mode
 
 ## Help

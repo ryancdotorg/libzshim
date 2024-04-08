@@ -127,7 +127,6 @@ void free_z_shim(z_shimp shim) {
   }
 }
 
-
 ZopfliFormat get_bits_format(int windowBits) {
   if (windowBits < 0) {
     return ZOPFLI_FORMAT_DEFLATE;
@@ -201,9 +200,18 @@ int wrap_deflate(z_streamp strm, int flush) {
 
       ZopfliOptions zopt[] = {0};
       _ZopfliInitOptions(zopt);
+      char *niter = getenv("LIBZSHIM_ZOPFLI_ITER");
 
-      // TODO: make this configurable - enviornment varibles?
-      if (shim->ibuf_off < 8192) {
+      if (NULL != niter) {
+        errno = 0;
+        unsigned long tmp = strtoul(niter, NULL, 10);
+        if (errno || tmp < 1 || tmp > 10000) {
+          fprintf(stderr, "libzshim: bad value for LIBZSHIM_ZOPFLI_ITER: '%s'", niter);
+          abort();
+        }
+        zopt->numiterations = (int)tmp;
+        debugp("LIBZSHIM_ZOPFLI_ITER: %d", zopt->numiterations);
+      } else if (shim->ibuf_off < 8192) {
         zopt->numiterations = 1000;
       } else if (shim->ibuf_off < 32768) {
         zopt->numiterations = 398;
@@ -225,7 +233,7 @@ int wrap_deflate(z_streamp strm, int flush) {
     }
 
     debugp(
-      "shim->obuf: %p @ %zu/%zu (%.3f%% %zu)\n",
+      "shim->obuf: %p @ %zu/%zu (%.2f%% %zu)\n",
       (void*)shim->obuf, shim->obuf_off, shim->obuf_sz,
       (100.0*(double)shim->obuf_sz) / (double)shim->ibuf_off, shim->ibuf_off
     );

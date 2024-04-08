@@ -45,6 +45,6 @@ uninstall:
 # note that $(info ...) prints everything on one line
 clean: _nop $(foreach _,$(filter clean,$(MAKECMDGOALS)),$(info $(shell $(MAKE) _clean)))
 _clean:
-	$(RM) libzshim.so libzshim-debug.so
+	$(RM) zshim.c libzshim.so libzshim-debug.so
 _nop:
 	@true
